@@ -6,10 +6,10 @@
 
 constexpr double PI = 3.14159265;
 
-class SquarePublisher : public rclcpp::Node{
+class CirclePublisher : public rclcpp::Node{
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
-    double side;
+    double radius;
     geometry_msgs::msg::Twist move_cmd;
     double linear_speed;
     double angular_speed;
@@ -17,60 +17,52 @@ class SquarePublisher : public rclcpp::Node{
     double current_x;
     double current_y;
     double current_yaw;
+    double percent;
 
 public:
-    SquarePublisher() : Node("square_movement_node"){
+    SquarePublisher() : Node("circle_movement_node"){
         odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
             "/odom", 10,
             std::bind(&SquarePublisher::odomCallback, this, std::placeholders::_1));
 
         publisher = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
 
-        this->declare_parameter<double>("side", 0.5);
-        this->get_parameter("side", side);
-        RCLCPP_INFO(this->get_logger(), "square side: %.2f",side);
+        this->declare_parameter<double>("radius", 0.5);
+        this->get_parameter("radius", radius);
+        RCLCPP_INFO(this->get_logger(), "circle radius: %.2f",radius);
+        linear_speed = 0.2;
+        angular_speed = linear_speed/radius;
 
-        linear_speed = 0.15;
-        angular_speed = 0.5;
         stop_time = 1.0;
+
+        this->declare_parameter<double>("percent", 100.0);
+        this->get_parameter("percent", percent);
+        percent = std::clamp(percent, 0.0, 100.0);
 
     }
     void move(){
-        double linear_sleep = side/linear_speed;
-        RCLCPP_INFO(this->get_logger(), "sleep for linear move: %.2f",linear_sleep);
-        double rotate_sleep = ((90*PI)/180)/angular_speed;
+        move_cmd.linear.x = linear_speed;   
+        move_cmd.angular.z = angular_speed;  
+
+        double angle = 2*PI*(percent/100.0); 
+        double drive_duration = angle/angular_speed;
+
+        rclcpp::Rate rate(50); 
         auto start = std::chrono::steady_clock::now();
-        rclcpp::Rate rate(50); // 10 Hz
+        auto duration = std::chrono::duration<double>(drive_duration); 
 
-        for(int i=0;i<4;i++){
-            move_cmd.linear.x = linear_speed;
-            move_cmd.angular.z = 0.0;
-
-            double start_x = current_x; 
-
-            while (rclcpp::ok() && hypot(current_x - start_x, current_y - start_y) < side){
-                publisher->publish(move_cmd);
-                rclcpp::spin_some(shared_from_this());
-                rate.sleep();
-            }
-
-            move_cmd.linear.x = 0.0;
-            move_cmd.angular.z = angular_speed;
-
-            double target_yaw = current_yaw + M_PI_2;
-            if (target_yaw > M_PI) target_yaw -= 2 * M_PI;
-
-            while (rclcpp::ok() && fabs(current_yaw - target_yaw) > 0.05) {
-                publisher->publish(move_cmd);
-                rclcpp::spin_some(shared_from_this());
-                rate.sleep();
-            }
+        while (rclcpp::ok() && (std::chrono::steady_clock::now()-start<drive_duration) ) {
+            publisher->publish(move_cmd);
+            rclcpp::spin_some(shared_from_this()); // Keep odometry updating if needed
+            rate.sleep();
         }
+
         move_cmd.linear.x = 0.0;
         move_cmd.angular.z = 0;
         start = std::chrono::steady_clock::now();
         while (std::chrono::steady_clock::now() - start < std::chrono::duration<double>(stop_time)) {
             publisher->publish(move_cmd);
+            rclcpp::spin_some(shared_from_this());
             rate.sleep();
         }
     }

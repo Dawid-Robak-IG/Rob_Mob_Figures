@@ -21,8 +21,12 @@ find_package(tf2_ros REQUIRED)
 add_executable(square src/square_node.cpp)
 ament_target_dependencies(square rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs tf2_ros)
 
+add_executable(circle src/circle_node.cpp)
+ament_target_dependencies(circle rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs tf2_ros)
+
 install(TARGETS
   square
+  circle
   DESTINATION lib/${PROJECT_NAME})
 
 
