@@ -1,8 +1,10 @@
+#include <algorithm>
+
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2/LinearMath/Quaternion.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 constexpr double PI = 3.14159265;
 
@@ -20,10 +22,10 @@ class CirclePublisher : public rclcpp::Node{
     double percent;
 
 public:
-    SquarePublisher() : Node("circle_movement_node"){
+    CirclePublisher() : Node("circle_movement_node"){
         odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
             "/odom", 10,
-            std::bind(&SquarePublisher::odomCallback, this, std::placeholders::_1));
+            std::bind(&CirclePublisher::odomCallback, this, std::placeholders::_1));
 
         publisher = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
 
@@ -51,7 +53,7 @@ public:
         auto start = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration<double>(drive_duration); 
 
-        while (rclcpp::ok() && (std::chrono::steady_clock::now()-start<drive_duration) ) {
+        while (rclcpp::ok() && (std::chrono::steady_clock::now()-start<duration) ) {
             publisher->publish(move_cmd);
             rclcpp::spin_some(shared_from_this()); // Keep odometry updating if needed
             rate.sleep();
@@ -88,8 +90,8 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto square = std::make_shared<SquarePublisher>();
-  square->move();
+  auto circle = std::make_shared<CirclePublisher>();
+  circle->move();
 
   rclcpp::shutdown();
   return 0;
