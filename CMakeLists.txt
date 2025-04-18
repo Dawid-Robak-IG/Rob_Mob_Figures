@@ -27,12 +27,16 @@ ament_target_dependencies(square rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_
 add_executable(circle src/circle_node.cpp)
 ament_target_dependencies(circle rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs tf2_ros sensor_msgs angles)
 
+add_executable(spiral src/spiral_node.cpp)
+ament_target_dependencies(spiral rclcpp geometry_msgs nav_msgs tf2 tf2_geometry_msgs tf2_ros sensor_msgs)
+
 add_executable(manual src/manual_node.cpp)
 ament_target_dependencies(manual rclcpp geometry_msgs std_msgs)
 
 install(TARGETS
   square
   circle
+  spiral
   manual
   DESTINATION lib/${PROJECT_NAME})
 

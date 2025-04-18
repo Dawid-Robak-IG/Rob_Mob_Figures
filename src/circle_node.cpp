@@ -35,7 +35,7 @@ class CirclePublisher : public rclcpp::Node{
     bool is_manual;
 
 public:
-    CirclePublisher() : Node("square_movement_node"){
+    CirclePublisher() : Node("circle_movement_node"){
         odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
             "/odom", 10,
             std::bind(&CirclePublisher::odomCallback, this, std::placeholders::_1)
