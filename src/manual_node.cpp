@@ -14,6 +14,7 @@ class ManualControlNode : public rclcpp::Node {
     std_msgs::msg::Bool toggle_data; 
     rclcpp::TimerBase::SharedPtr send_toggle;
 public:
+    static bool enabled_raw_count; // to not put new settign to old ones
     ManualControlNode() : Node("manual_control_node") {
         publisher = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
         manual_pub = this->create_publisher<std_msgs::msg::Bool>("/manual_toggle", 10);
@@ -64,12 +65,14 @@ private:
     void setTerminalRawMode(bool enable) {
         static struct termios oldt;
         struct termios newt;
-        if (enable) {
+        if (enable && enabled_raw_count==false) {
             tcgetattr(STDIN_FILENO, &oldt);
+            enabled_raw_count=true;
             newt = oldt;
             newt.c_lflag &= ~(ICANON | ECHO);
             tcsetattr(STDIN_FILENO, TCSANOW, &newt);
         } else {
+            enabled_raw_count=false;
             tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
         }
     }
@@ -77,7 +80,11 @@ private:
         manual_pub->publish(toggle_data);
     }
 };
+
+bool ManualControlNode::enabled_raw_count=false;
+
 int main(int argc, char *argv[]) {
+    ManualControlNode::enabled_raw_count=false;
     rclcpp::init(argc, argv);
     auto node = std::make_shared<ManualControlNode>();
     rclcpp::spin(node);

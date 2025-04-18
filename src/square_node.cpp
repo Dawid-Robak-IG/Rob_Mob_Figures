@@ -77,8 +77,6 @@ public:
         stop_move_cmd.angular.z = 0.0;
     }
     void move(){
-        double linear_sleep = side/linear_speed;
-        RCLCPP_INFO(this->get_logger(), "sleep for linear move: %.2f",linear_sleep);
         rclcpp::Rate rate(50); 
 
         for(int i=0;i<4;i++){
@@ -152,6 +150,7 @@ private:
             if (angle_deg < 0) angle_deg += 360;
 
             double range = msg->ranges[i];
+            if (!std::isfinite(range)) continue;
     
             if ((angle_deg >= 0 && angle_deg <= 90) || (angle_deg >= 270 && angle_deg < 360)) {
                 if (range < front_min) front_min = range;
@@ -179,14 +178,14 @@ private:
             RCLCPP_INFO(this->get_logger(), "Manual is OFF. Resuming");
         }
     } 
-    void checkIfManual(){
-        size_t publisher_count = this->count_publishers("/cmd_vel");
+    // void checkIfManual(){
+    //     size_t publisher_count = this->count_publishers("/cmd_vel");
 
-        if(publisher_count > 1){
-            RCLCPP_WARN(this->get_logger(), "Detected more than one publsiher, ending process");
-            rclcpp::shutdown();
-        }
-    }
+    //     if(publisher_count > 1){
+    //         RCLCPP_WARN(this->get_logger(), "Detected more than one publsiher, ending process");
+    //         rclcpp::shutdown();
+    //     }
+    // }
     void stopRobot(){
         rclcpp::Rate rate(10); 
         auto start = std::chrono::steady_clock::now();
