@@ -55,6 +55,7 @@ public:
 
         this->declare_parameter<double>("side", 0.5);
         this->get_parameter("side", side);
+        if(side<0)side*=-1;
         RCLCPP_INFO(this->get_logger(), "square side: %.2f",side);
 
         this->declare_parameter<double>("speed", 0.15);

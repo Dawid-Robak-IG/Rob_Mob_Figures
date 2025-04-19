@@ -55,6 +55,7 @@ public:
 
         this->declare_parameter<double>("radius", 0.5);
         this->get_parameter("radius", radius);
+        if(radius<0)radius*=-1;
         RCLCPP_INFO(this->get_logger(), "circle radius: %.2f",radius);
 
         this->declare_parameter<double>("percent", 100.0);
